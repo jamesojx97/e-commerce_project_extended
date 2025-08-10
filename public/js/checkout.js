@@ -1,67 +1,67 @@
-// checkout.js
+document.addEventListener("DOMContentLoaded", async function () {
+    const stripe = Stripe(stripePublicKey); // Your public key from the server
+    const amountinCents = amount
 
-document.addEventListener("DOMContentLoaded", function () {
-
-    const stripe = Stripe(stripePublicKey);
-    const clientSecret = document.querySelector('form[name="payment-form"]').dataset.secret;
     const options = {
-        clientSecret: clientSecret,
+        mode: 'payment',
+        amount: amountinCents,
+        currency: 'usd',
+        paymentMethodCreation: 'manual',
         // Fully customizable with appearance API.
-        appearance: {
-            theme: 'stripe',
-            variables: {
-                colorPrimary: '#0570de',
-                colorBackground: '#ffffff',
-                colorText: '#30313d',
-                colorDanger: '#df1b41',
-                fontFamily: 'Ideal Sans, system-ui, sans-serif',
-                spacingUnit: '2px',
-                borderRadius: '4px',
-            },
-            rules: {
-                '.Error': {
-                    color: '#fa755a', // Set text color for error messages
-                    fontSize: '16px', // Error message font size
-                    marginTop: '10px', // Margin above the error message
-                    display: 'block', // Make sure it displays 
-                },
-                '.Tab:hover': {
-                    color: 'var(--colorText)',
-                },
-                '.Tab--selected': {
-                    borderColor: '#E0E6EB',
-                    boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.03), 0px 3px 6px rgba(18, 42, 66, 0.02), 0 0 0 2px var(--colorPrimary)',
-                },
-            }
-        },
+        appearance: {/*...*/},
     };
-    // Set up Stripe.js and Elements to use in checkout form, passing the client secret obtained
-    const elements = stripe.elements(options);
-    // Create and mount the Payment Element
-    const paymentElementOptions = { layout: 'accordion'};
-    const paymentElement = elements.create('payment', paymentElementOptions);
-    paymentElement.mount('#payment-element');
-    console.log("Stripe Elements initialization successful.");
-    
+    const elements = stripe.elements(options); // Initialize Elements without a client secret
+
+    const paymentElement = elements.create('payment');
+    paymentElement.mount('#payment-element'); // Mount the payment element to the DOM
+
     const form = document.getElementById('payment-form');
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const button = form.querySelector('button[type="submit"]');
-        button.disabled = true;
 
-        const { error } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                return_url: 'http://127.0.0.1:5000/success',
-            },
+    if (form) {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = true; // Disable the button to prevent multiple submissions
+
+            // Confirm the payment and obtain the confirmation token
+            const { error, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: 'http://127.0.0.1:5000/success', // Redirect URL after confirming payment
+                }
+            });
+
+            if (error) {
+                // Handle errors
+                button.disabled = false; // Re-enable the button
+                console.error("Payment confirmation error:", error);
+                alert(error.message); // Show error message
+            } else {
+                // On success, send the payment intent ID to the server
+                const confirmationTokenId = paymentIntent.id; // Extract the payment intent ID
+
+                const res = await fetch("/create-confirm-intent", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        confirmationTokenId: confirmationTokenId // Send the confirmation token ID to the server
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Payment Intent created successfully
+                    window.location.href = `http://127.0.0.1:5000/success?payment_intent=${data.paymentIntentId}`;
+                } else {
+                    alert(data.error || 'Payment processing failed.');
+                    button.disabled = false; // Re-enable on error
+                }
+            }
         });
-
-        if (error) {
-            button.disabled = false;
-            console.error(error);
-            alert(error.message);
-        } else {
-            window.location.href = 'http://127.0.0.1:5000/success?payment_intent=${paymentIntent.id}'; // Successful payment
-        }
-    });
+    } else {
+        console.error("Form with ID 'payment-form' not found!");
+    }
 });

@@ -13,7 +13,8 @@
     </div>
     <div class="card box-shadow mt-40">
       <div class="card-body">
-        <form id="payment-form" name="payment-form" data-secret="{{ client_secret }}">
+<!--        <form id="payment-form" name="payment-form" data-secret="{{ client_secret }}"> -->
+        <form id="payment-form" name="payment-form"></form>
           <div>
             <label for="email">Email address</label>
             <input type="email" class="form-control" id="email" name="email" placeholder="you@email.com">
@@ -26,9 +27,10 @@
           </div>
         </form>
         <!-- Optional Client Secret Check -->
-        <script>
+<!--        <script>
             console.log("Client Secret:", "{{ client_secret }}"); // Check if the client_secret is rendered correctly
         </script>
+-->
       </div>
     </div>
   </div>
@@ -36,6 +38,7 @@
 
 <script>
     const stripePublicKey = "{{ public_key }}"; // For the public key
+    const amount = parseInt("{{ amount }}", 10);  // Convert to integer
 </script>
 <script src="/js/checkout.js"></script>  <!-- Adjust path to js folder -->
 
