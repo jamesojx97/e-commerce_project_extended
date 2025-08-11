@@ -2,7 +2,7 @@ import os
 import stripe
 
 from dotenv import load_dotenv
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 
 load_dotenv()
 
@@ -41,74 +41,98 @@ def checkout():
   else:
     # Included in layout view, feel free to assign error
     error = 'No item selected'
-  '''
-  payment_intent = stripe.PaymentIntent.create(
-    amount=1099,
-    currency="usd",
-    automatic_payment_methods={"enabled": True},
-  )
-  '''
+ 
 
   public_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
-  print("Stripe Public Key:", public_key)  # This is your publishable key
+  print("Stripe Public Key:", public_key)  # This is your publishable key]
+  print('Amount: ', amount)
 
   #return render_template('checkout.html', title=title, amount=amount, error=error, client_secret=payment_intent.client_secret, public_key=public_key)
-  return render_template('checkout.html', title=title, amount=amount, error=error, public_key=public_key)
+  return render_template('checkout.html', title=title, amount=amount, error=error, public_key=public_key, default_currency='sgd')
 
-# Success route
-@app.route('/success', methods=['GET'])
-def success():
-  '''
-  payment_intent_id = request.args.get('payment_intent')  # This comes from confirmPayment in frontend
-  payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)  # Retrieve the PaymentIntent
-  
-  amount_received = payment_intent['amount_received'] / 100  # Convert to dollars
-  currency = payment_intent['currency']
-  payment_status = payment_intent['status']
-    
-  return render_template('success.html', amount=amount_received, currency=currency, status=payment_status, payment_intent_id=payment_intent_id)
-  ''' 
 
+# Create and Confirm PaymentIntent route
 @app.route('/create-confirm-intent', methods=['POST'])
 def create_confirm_intent():
     data = request.get_json()
-    confirmation_token = data['confirmationTokenId']
+    confirmation_token_id = data['confirmationTokenId']
+    amount = data['amount']
+    currency = data['currency']
+    discountApplied=False
+    discounted_amount=amount
+
 
     try:
-        # Confirm the payment and inspect the card details
-        payment_intent = stripe.PaymentIntent.retrieve(confirmation_token)
+      # Inspect the card details from confirmation token
+      confirmation_token = stripe.ConfirmationToken.retrieve(confirmation_token_id)
+      if not confirmation_token:
+        return jsonify({'error': 'Missing confirmation token'}), 400
+    
+      card_country = confirmation_token['payment_method_preview']['card']['country']
+      card_brand = confirmation_token['payment_method_preview']['card']['brand']
 
-        # Optionally, you can inspect the card details here to determine promotions
-        card_details = payment_intent['payment_method_details']['card']
-        card_country = card_details['country']
-        card_brand = card_details['brand']
+      # Check for promotions based on the card
+      eligible_for_promotion = check_promotion_criteria(card_brand)
 
-        # Check for promotions based on the card
-        eligible_for_promotion = check_promotion_criteria(card_country, card_brand)
-
-        # Only create a Payment Intent if eligible
-        if eligible_for_promotion:
-            new_payment_intent = stripe.PaymentIntent.create(
-                amount=payment_intent['amount'],  # Use the amount your server wishes to charge
-                currency=payment_intent['currency'],
-                confirmation_method='manual',
-                confirm=True,
-                payment_method=payment_intent['payment_method']  # Or pass the actual payment method ID
-            )
-            return jsonify({'paymentIntentId': new_payment_intent.id})
-
-        return jsonify({'error': 'Not eligible for promotions'}), 400
+      # Only create a Payment Intent if eligible
+      if eligible_for_promotion:
+        discounted_amount=0.9*amount
+        discountApplied=True
+      payment_intent = stripe.PaymentIntent.create(
+          amount=int(amount),  # Use the amount your server wishes to charge
+          currency=currency,
+          confirm=True,                  
+          confirmation_token=confirmation_token,
+          return_url='http://127.0.0.1:5000/success'
+          
+      )
+      print('herehere')
+      print(discountApplied)
+      return jsonify({
+         'paymentIntentId': payment_intent.id,
+         'amount': amount/100,
+         'discountedAmount': discounted_amount/100,  # Return the final discounted amount (if any)
+         'discount': discountApplied,
+         'currency': currency
+      })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def check_promotion_criteria(country, brand):
+def check_promotion_criteria(brand):
     # Logic to determine if the card qualifies for promotions
-    if country in ['US', 'CA'] and brand in ['Visa', 'MasterCard']:
+    if brand in ['visa']:
         return True
     return False
 
+# Success route
+@app.route('/success', methods=['GET'])
+def success():
+    # Retrieve the payment intent ID and other parameters from the query string
+    payment_intent_id = request.args.get('payment_intent')
+    amount = request.args.get('amount')
+    discounted_amount = request.args.get('discounted_amount')
+    currency = request.args.get('currency')
+    discount_str = request.args.get('discount')  # Convert to boolean
+    discount = discount_str.lower() == 'true'
+  
 
+    print(payment_intent_id)
+    print(amount)
+    print(discount_str)
+    print(discount)
+    print(currency)
+
+    # You can add validation if necessary
+    if not payment_intent_id or not amount or not currency:
+        return jsonify({'error': 'Missing required parameters!'}), 400
+
+    return render_template('success.html', 
+                           payment_intent_id=payment_intent_id, 
+                           amount=amount, 
+                           currency=currency, 
+                           eligible_for_discount=discount, 
+                           discounted_amount=discounted_amount)
 
 if __name__ == '__main__':
   app.run(port=5000, host='0.0.0.0', debug=True)

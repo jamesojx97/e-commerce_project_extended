@@ -1,6 +1,11 @@
 {% extends 'layouts/main.html' %}
 
 {% block content %}
+<!-- Promotional Banner for Visa Card Promotions -->
+<div class="alert alert-success text-center" role="alert" style="margin-bottom: 20px;">
+    <strong>🎉 Special Promotion!</strong> Enjoy a 10% discount on all purchases made with Visa cards!
+</div>
+
 <div class="row justify-content-md-center">
   <div class="col-6">
     <div class="text-center mt-40">
@@ -8,13 +13,12 @@
       <h5 class="text-secondary">{{ title }}</h5>
       <hr class="mt-40">
       <div class="mt-20 text-info">
-        Total due: $<span class="amount" data-amount="{{ amount }}"></span>
+          Total due: $<span class="amount" data-amount="{{ amount }}">{{ '%.2f' % (amount / 100) }}</span> 
       </div>
     </div>
     <div class="card box-shadow mt-40">
       <div class="card-body">
-<!--        <form id="payment-form" name="payment-form" data-secret="{{ client_secret }}"> -->
-        <form id="payment-form" name="payment-form"></form>
+        <form id="payment-form" name="payment-form">
           <div>
             <label for="email">Email address</label>
             <input type="email" class="form-control" id="email" name="email" placeholder="you@email.com">
@@ -23,14 +27,9 @@
               <!-- Stripe Payment Element will be inserted here -->
           </div>
           <div class="mt-20">
-            <button type="submit" class="btn btn-lg btn-block btn-primary">Pay $<span class="amount" data-amount="{{ amount }}"></span></button>
+            <button type="submit" class="btn btn-lg btn-block btn-primary">Pay $<span class="amount" data-amount="{{ amount }}">{{ '%.2f' % (amount / 100) }}</span></button>
           </div>
         </form>
-        <!-- Optional Client Secret Check -->
-<!--        <script>
-            console.log("Client Secret:", "{{ client_secret }}"); // Check if the client_secret is rendered correctly
-        </script>
--->
       </div>
     </div>
   </div>
@@ -39,7 +38,8 @@
 <script>
     const stripePublicKey = "{{ public_key }}"; // For the public key
     const amount = parseInt("{{ amount }}", 10);  // Convert to integer
+    const currency = "{{ default_currency }}"
 </script>
-<script src="/js/checkout.js"></script>  <!-- Adjust path to js folder -->
+<script src="/js/checkout.js"></script>  <!-- Path to the JS folder -->
 
 {% endblock %}

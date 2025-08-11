@@ -10,12 +10,18 @@
   </div>
   <div class="mt-40 text-center">
     <div class="mt-20 text-center text-secondary border-placeholder">
-      <!--Add details about the payment here!-->
       <p>Thank you for your payment!</p>
-      <p><strong>Amount Received:</strong> {{ amount }} {{ currency.upper() }}</p>
-      <p><strong>Payment Status:</strong> {{ status | capitalize }}</p>
-      <p><strong>Payment Intent ID: </strong><em>{{payment_intent_id}}</em></p>
+      <p><strong>Original Amount:</strong> ${{ amount }}</p>  <!-- Assuming amount is in dollars -->
+      <p>
+        <strong>Discounted Amount:</strong> 
+        ${{
+            discounted_amount if eligible_for_discount else 'N/A'
+        }}
+      </p>
+      <p><strong>Payment Intent ID:</strong> {{ payment_intent_id | capitalize }}</p>  <!-- Ensure status is passed to the template -->
     </div>
   </div>
 </main>
+
+<script src="/js/checkout.js"></script> 
 {% endblock %}
