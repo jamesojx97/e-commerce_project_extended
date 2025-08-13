@@ -78,7 +78,7 @@ def create_confirm_intent():
       if eligible_for_promotion:
         discounted_amount=0.9*amount
         discountApplied=True
-      payment_intent = stripe.PaymentIntent.create(
+        payment_intent = stripe.PaymentIntent.create(
           amount=int(amount),  # Use the amount your server wishes to charge
           currency=currency,
           confirm=True,                  
@@ -86,7 +86,6 @@ def create_confirm_intent():
           return_url='http://127.0.0.1:5000/success'
           
       )
-      print('herehere')
       print(discountApplied)
       return jsonify({
          'paymentIntentId': payment_intent.id,
@@ -104,6 +103,33 @@ def check_promotion_criteria(brand):
     if brand in ['visa']:
         return True
     return False
+
+# Create a PayNow Payment Intent
+@app.route('/create-paynow-intent', methods=['POST'])
+def create_paynow_intent():
+    data = request.get_json()
+    amount = data['amount']
+    currency = data['currency']
+    discounted_amount = amount
+    discount_applied = False
+
+    try:
+        payment_intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            payment_method_types=['paynow'],
+            payment_method_data={"type": "paynow"},
+        )
+        return jsonify({
+            'client_secret': payment_intent.client_secret,
+            'paymentIntentId': payment_intent.id,
+            'amount': amount,
+            'discountedAmount': discounted_amount,
+            'discount': discount_applied,
+            'currency': currency
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Success route
 @app.route('/success', methods=['GET'])
