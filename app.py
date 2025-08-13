@@ -92,7 +92,8 @@ def create_confirm_intent():
          'amount': amount/100,
          'discountedAmount': discounted_amount/100,  # Return the final discounted amount (if any)
          'discount': discountApplied,
-         'currency': currency
+         'currency': currency,
+         'status': payment_intent.status
       })
 
     except Exception as e:
@@ -104,9 +105,9 @@ def check_promotion_criteria(brand):
         return True
     return False
 
-# Create a PayNow Payment Intent
-@app.route('/create-paynow-intent', methods=['POST'])
-def create_paynow_intent():
+# Create a Grabpay Payment Intent
+@app.route('/create-grabpay-intent', methods=['POST'])
+def create_grabpay_intent():
     data = request.get_json()
     amount = data['amount']
     currency = data['currency']
@@ -117,8 +118,7 @@ def create_paynow_intent():
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency=currency,
-            payment_method_types=['paynow'],
-            payment_method_data={"type": "paynow"},
+            payment_method_types=['grabpay'],
         )
         return jsonify({
             'client_secret': payment_intent.client_secret,
@@ -126,10 +126,71 @@ def create_paynow_intent():
             'amount': amount,
             'discountedAmount': discounted_amount,
             'discount': discount_applied,
-            'currency': currency
+            'currency': currency,
+            'status': payment_intent.status
+
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Create a Alipay Payment Intent
+@app.route('/create-alipay-intent', methods=['POST'])
+def create_alipay_intent():
+    data = request.get_json()
+    amount = data['amount']
+    currency = data['currency']
+    discounted_amount = amount
+    discount_applied = False
+
+    try:
+        payment_intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            payment_method_types=['alipay'],
+        )
+        return jsonify({
+            'client_secret': payment_intent.client_secret,
+            'paymentIntentId': payment_intent.id,
+            'amount': amount,
+            'discountedAmount': discounted_amount,
+            'discount': discount_applied,
+            'currency': currency,
+            'status': payment_intent.status
+
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    
+# Create a Wechat Pay Payment Intent
+@app.route('/create-wechatpay-intent', methods=['POST'])
+def create_wechatpay_intent():
+    data = request.get_json()
+    amount = data['amount']
+    currency = data['currency']
+    discounted_amount = amount
+    discount_applied = False
+
+    try:
+        payment_intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=currency,
+            payment_method_types=['wechat_pay'],
+            payment_method_options={'wechat_pay': {'client': 'web'}}
+        )
+        return jsonify({
+            'client_secret': payment_intent.client_secret,
+            'paymentIntentId': payment_intent.id,
+            'amount': amount,
+            'discountedAmount': discounted_amount,
+            'discount': discount_applied,
+            'currency': currency,
+            'status': payment_intent.status
+
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # Success route
 @app.route('/success', methods=['GET'])
@@ -141,15 +202,11 @@ def success():
     currency = request.args.get('currency')
     discount_str = request.args.get('discount')  # Convert to boolean
     discount = discount_str.lower() == 'true'
+    
+    # Get updated payment intent status
+    payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+    status = payment_intent.status
   
-
-    print(payment_intent_id)
-    print(amount)
-    print(discount_str)
-    print(discount)
-    print(currency)
-
-    # You can add validation if necessary
     if not payment_intent_id or not amount or not currency:
         return jsonify({'error': 'Missing required parameters!'}), 400
 
@@ -158,7 +215,9 @@ def success():
                            amount=amount, 
                            currency=currency, 
                            eligible_for_discount=discount, 
-                           discounted_amount=discounted_amount)
+                           discounted_amount=discounted_amount,
+                           status=status)
+
 
 if __name__ == '__main__':
   app.run(port=5000, host='0.0.0.0', debug=True)

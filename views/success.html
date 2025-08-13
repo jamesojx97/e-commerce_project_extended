@@ -2,26 +2,44 @@
 
 {% block content %}
 <main>
-  <div class="mt-40 text-center text-success">
-    <h1>
-      <i class="far fa-check-circle"></i> 
-      Success!
-    </h1>
+  <div class="mt-40 text-center">
+    {% if status == 'succeeded' %}
+      <div class="text-success">
+        <h1>
+          <i class="far fa-check-circle"></i>
+          Payment Successful!
+        </h1>
+      </div>
+    {% else %}
+      <div class="text-danger">
+        <h1>
+          <i class="fas fa-times-circle"></i>
+          Payment Unsuccessful
+        </h1>
+        <p>Would you like to <a href="/" class="text-primary">try another payment</a>?</p>
+      </div>
+    {% endif %}
   </div>
+  <hr class="my-8"/>
   <div class="mt-40 text-center">
     <div class="mt-20 text-center text-secondary border-placeholder">
-      <p>Thank you for your payment!</p>
-      <p><strong>Original Amount:</strong> ${{ amount }}</p>  <!-- Assuming amount is in dollars -->
-      <p>
-        <strong>Discounted Amount:</strong> 
-        ${{
-            discounted_amount if eligible_for_discount else 'N/A'
-        }}
-      </p>
-      <p><strong>Payment Intent ID:</strong> {{ payment_intent_id | capitalize }}</p>  <!-- Ensure status is passed to the template -->
+      <p><strong>Payment Status:</strong> {{ status }}</p>
+      {% if status == 'succeeded' %}
+        <p>Thank you for your payment!</p>
+        <p><strong>Original Amount:</strong> ${{ amount }}</p>
+        <p>
+          <strong>Discounted Amount:</strong>
+          ${{ discounted_amount if eligible_for_discount else 'N/A' }}
+        </p>
+      {% elif status == 'requires_action' %}
+        <p>Your payment requires further action. Please contact our support team for help.</p>
+      {% else %}
+        <p>There was an issue processing your payment. Please try again.</p>
+      {% endif %}
+        <p><strong>Payment Intent ID:</strong> {{ payment_intent_id | capitalize }}</p>
     </div>
   </div>
 </main>
 
-<script src="/js/checkout.js"></script> 
+<script src="/js/checkout.js"></script>
 {% endblock %}

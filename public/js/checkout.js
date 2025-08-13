@@ -100,70 +100,92 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const data = await res.json();
                 if (res.ok) {
-                        const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
-                        window.location.href = successUrl;
+                    const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                    window.location.href = successUrl;
                 } 
                 else {
                     handleError(new Error(data.error));
                 }
 
-            } else if (selectedPaymentMethodType === 'paynow') {
+            } 
+            else if (selectedPaymentMethodType === 'grabpay') {
                 // Create the Payment Intent on the server
-                const res = await fetch("/create-paynow-intent", {
+                const res = await fetch("/create-grabpay-intent", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         amount: amountinCents,
                         currency: currency,
-                        paymentMethodType: 'paynow'
+                        paymentMethodType: 'grabpay'
                     })
                 });
 
                 const data = await res.json();
-                console.log('result here')
-                console.log(res)
-
+                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                        
                 if (res.ok) {
-                    // Construct the URL with query parameters
-                    const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
-
-                    stripe.confirmPayNowPayment(
-                        data.client_secret,
-                        {}
-                        ).then(function({error, paymentIntent}) {
-                        const messageContainer = document.querySelector('#error-message');
-
-                        if (error) {
-                        // Show error to your customer (e.g., insufficient funds, card declined)
-                            if (messageContainer) {
-                                messageContainer.textContent = error.message;
-                            }
-                        } 
-                        else if (paymentIntent.status === 'succeeded') {
-                            // The payment succeeded
-                                if (messageContainer) {
-                                    messageContainer.textContent = "Payment succeeded!";
-                                }
-                            // You can redirect to a success page here
-                        } 
-                        else if (paymentIntent.status === 'requires_action') {
-                            // The payment requires additional action from the customer.
-                            // For PayNow, this usually means showing the QR code.
-                            // The Payment Element handles this automatically.
-                            // Your code might not even reach this point if using the Payment Element.
-                            if (messageContainer) {
-                                messageContainer.textContent = "Payment requires confirmation.";
-                            }
-                        }
+                    stripe.confirmGrabPayPayment(data.client_secret, {
+                        // Return URL where the customer should be redirected after the authorization
+                        return_url: window.location.origin + successUrl,
                     });
                 } 
                 else {
                     handleError(new Error(data.error));
                 }
-                
+            }
+            else if (selectedPaymentMethodType === 'alipay') {
+                // Create the Payment Intent on the server
+                const res = await fetch("/create-alipay-intent", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: amountinCents,
+                        currency: currency,
+                        paymentMethodType: 'alipay'
+                    })
+                });
+
+                const data = await res.json();
+                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                        
+                if (res.ok) {
+                    stripe.confirmAlipayPayment(data.client_secret, {
+                        // Return URL where the customer should be redirected after the authorization
+                        return_url: window.location.origin + successUrl,
+                    });
+                } 
+                else {
+                    handleError(new Error(data.error));
+                }
+            }
+            else if (selectedPaymentMethodType === 'wechat_pay') {
+                // Create the Payment Intent on the server
+                const res = await fetch("/create-wechatpay-intent", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: amountinCents,
+                        currency: currency,
+                        paymentMethodType: 'wechat_pay'
+                    })
+                });
+
+                const data = await res.json();
+                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                        
+                if (res.ok) {
+                    stripe.confirmWechatPayPayment(data.client_secret, {
+                        // Return URL where the customer should be redirected after the authorization
+                        return_url: window.location.origin + successUrl,
+                    });
+                } 
+                else {
+                    handleError(new Error(data.error));
+                }
             }
         });
-    } else {
+    } 
+    else {
         console.error("Form with ID 'payment-form' not found!"); // Log if form is not found
     }
 });
