@@ -13,7 +13,7 @@
       <h5 class="text-secondary">{{ title }}</h5>
       <hr class="mt-40">
       <div class="mt-20 text-info">
-          Total due: $<span class="amount" data-amount="{{ amount }}">{{ '%.2f' % (amount / 100) }}</span> 
+          Total due: {{ default_currency | upper }}<span class="amount" data-amount="{{ amount }}">{{ '%.2f' % (amount / 100) }}</span> 
       </div>
     </div>
     <div class="card box-shadow mt-40">
@@ -27,7 +27,7 @@
               <!-- Stripe Payment Element will be inserted here -->
           </div>
           <div class="mt-20">
-            <button type="submit" class="btn btn-lg btn-block btn-primary">Pay $<span class="amount" data-amount="{{ amount }}">{{ '%.2f' % (amount / 100) }}</span></button>
+            <button type="submit" class="btn btn-lg btn-block btn-primary">Pay {{ default_currency | upper }}$<span class="amount" data-amount="{{ amount }}">{{ '%.2f' % (amount / 100) }}</span></button>
           </div>
         </form>
       </div>

@@ -44,7 +44,7 @@ def checkout():
  
 
   public_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
-  print("Stripe Public Key:", public_key)  # This is your publishable key]
+  #print("Stripe Public Key:", public_key)  # Publishable Key
   print('Amount: ', amount)
 
   #return render_template('checkout.html', title=title, amount=amount, error=error, client_secret=payment_intent.client_secret, public_key=public_key)
@@ -79,21 +79,20 @@ def create_confirm_intent():
         discounted_amount=0.9*amount
         discountApplied=True
         payment_intent = stripe.PaymentIntent.create(
-          amount=int(amount),  # Use the amount your server wishes to charge
+          amount=int(amount),  
           currency=currency,
           confirm=True,                  
           confirmation_token=confirmation_token,
           return_url='http://127.0.0.1:5000/success'
           
       )
-      print(discountApplied)
       return jsonify({
          'paymentIntentId': payment_intent.id,
-         'amount': amount/100,
-         'discountedAmount': discounted_amount/100,  # Return the final discounted amount (if any)
-         'discount': discountApplied,
+         'amount': '{:.2f}'.format(amount/100),
          'currency': currency,
-         'status': payment_intent.status
+         'discountedAmount': '{:.2f}'.format(discounted_amount/100), 
+         'discount': discountApplied,
+         'status': payment_intent.status    
       })
 
     except Exception as e:
@@ -123,8 +122,8 @@ def create_grabpay_intent():
         return jsonify({
             'client_secret': payment_intent.client_secret,
             'paymentIntentId': payment_intent.id,
-            'amount': amount,
-            'discountedAmount': discounted_amount,
+            'amount': '{:.2f}'.format(amount/100),
+            'discountedAmount': '{:.2f}'.format(discounted_amount/100),
             'discount': discount_applied,
             'currency': currency,
             'status': payment_intent.status
@@ -151,8 +150,8 @@ def create_alipay_intent():
         return jsonify({
             'client_secret': payment_intent.client_secret,
             'paymentIntentId': payment_intent.id,
-            'amount': amount,
-            'discountedAmount': discounted_amount,
+            'amount': '{:.2f}'.format(amount/100),
+            'discountedAmount': '{:.2f}'.format(discounted_amount/100),
             'discount': discount_applied,
             'currency': currency,
             'status': payment_intent.status
@@ -160,37 +159,6 @@ def create_alipay_intent():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-    
-# Create a Wechat Pay Payment Intent
-@app.route('/create-wechatpay-intent', methods=['POST'])
-def create_wechatpay_intent():
-    data = request.get_json()
-    amount = data['amount']
-    currency = data['currency']
-    discounted_amount = amount
-    discount_applied = False
-
-    try:
-        payment_intent = stripe.PaymentIntent.create(
-            amount=amount,
-            currency=currency,
-            payment_method_types=['wechat_pay'],
-            payment_method_options={'wechat_pay': {'client': 'web'}}
-        )
-        return jsonify({
-            'client_secret': payment_intent.client_secret,
-            'paymentIntentId': payment_intent.id,
-            'amount': amount,
-            'discountedAmount': discounted_amount,
-            'discount': discount_applied,
-            'currency': currency,
-            'status': payment_intent.status
-
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 
 # Success route
 @app.route('/success', methods=['GET'])

@@ -26,10 +26,10 @@
       <p><strong>Payment Status:</strong> {{ status }}</p>
       {% if status == 'succeeded' %}
         <p>Thank you for your payment!</p>
-        <p><strong>Original Amount:</strong> ${{ amount }}</p>
+        <p><strong>Original Amount:</strong> {{ currency | upper }} ${{ amount }}</p>
         <p>
           <strong>Discounted Amount:</strong>
-          ${{ discounted_amount if eligible_for_discount else 'N/A' }}
+          {{ currency | upper }} ${{ discounted_amount if eligible_for_discount else 'N/A' }}
         </p>
       {% elif status == 'requires_action' %}
         <p>Your payment requires further action. Please contact our support team for help.</p>
