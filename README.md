@@ -62,7 +62,7 @@ The application is structured as a Flask project:
 
 ### Approach
 
-I considered what the merchant integrating Stripe may require in terms of their checkout flow and the business logic necessary. This is why I chose to show local Payment Methods such as Alipay and GrabPay in addition to cards. From past experience, merchants choosing to integrate Payment Element often have their own business logic they want to run prior to creating the Payment Intent. Thus, I chose an advanced integration design - **Finalize Payments on the Server**. This demonstrates to the merchant how the implementation is flexible enough to accommodate their custom business logic such as inspecting card details to determine if discounts are applicable.
+I considered what the merchant integrating Stripe may require in terms of their checkout flow and the business logic necessary. This is why I chose to show local Payment Methods such as Alipay and GrabPay in addition to cards. From past experience, merchants choosing to integrate Payment Element often have their own business logic they want to run prior to creating the Payment Intent. Thus, I chose an advanced integration design - **Finalize Payments on the Server**. This demonstrates to the merchant how the implementation is flexible enough to accommodate their custom business logic such as inspecting card details to determine if discounts are applicable. Error handling such as prevention of multiple submissions and submitting card payment details without valid expiration dates or CVC formats has been included. 
 
 ### Documentation
 
@@ -84,7 +84,9 @@ I considered what the merchant integrating Stripe may require in terms of their 
 
 1. **Setting publishable key in checkout.js**: Extension from HTML encountered errors initially as it was not yet initialized - needed to be first set in the `checkout.html` file.
 
-2. **Stripe SDK versioning**: Payment Element's Finalize Payments on the Server integration requires the Retrieve Confirmation Token API. The initial SDK version was v2 but it requires at least v8 - updated the `requirements.txt` file to include the minimum version.
+2. **Outdated payment intent status**: Passing the payment intent status through API calls b/w the client and server doesn't provide the most updated state of the PaymentIntent object. Retrieving the PaymentIntent status from the server prior to rendering the success.html page was a better approach. 
+
+3. **Stripe SDK versioning**: Payment Element's Finalize Payments on the Server integration requires the Retrieve Confirmation Token API. The initial SDK version was v2 but it requires at least v8 - updated the `requirements.txt` file to include the minimum version.
 
 3. **POST request structure**: Tried to create a POST request that passed in a JSON object but POST requests typically return some data which was no longer needed by the client side. Structurally it was much easier to use a GET request that took in query parameter values and rendered these values in the `success.html`.
 
