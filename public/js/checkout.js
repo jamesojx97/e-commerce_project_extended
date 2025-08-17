@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     handleError(error);
                     return; // Early exit on error
                 }
-                console.log(confirmationToken.id);
+                //console.log(confirmationToken.id);
 
                 // Send confirmation token to server to create a Payment Intent
                 const res = await fetch("/create-confirm-intent-card", {
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const data = await res.json();
                 const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
                 clientSecret = data.client_secret
-                console.log(clientSecret);
+                //console.log(clientSecret);
 
                 if (res.ok) {
                     stripe.confirmPayment({

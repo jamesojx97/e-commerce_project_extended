@@ -45,7 +45,7 @@ def checkout():
 
   public_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
   #print("Stripe Public Key:", public_key)  # Publishable Key
-  print('Amount: ', amount)
+  #print('Amount: ', amount)
 
   #return render_template('checkout.html', title=title, amount=amount, error=error, client_secret=payment_intent.client_secret, public_key=public_key)
   return render_template('checkout.html', title=title, amount=amount, error=error, public_key=public_key, default_currency='sgd')
