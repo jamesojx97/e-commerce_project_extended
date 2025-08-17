@@ -51,15 +51,15 @@ def checkout():
   return render_template('checkout.html', title=title, amount=amount, error=error, public_key=public_key, default_currency='sgd')
 
 
-# Create and Confirm PaymentIntent route
-@app.route('/create-confirm-intent', methods=['POST'])
-def create_confirm_intent():
+# Create and Confirm PaymentIntent route for Card
+@app.route('/create-confirm-intent-card', methods=['POST'])
+def create_confirm_intent_card():
     data = request.get_json()
     confirmation_token_id = data['confirmationTokenId']
     amount = data['amount']
     currency = data['currency']
-    discountApplied=False
-    discounted_amount=amount
+    discounted_amount = amount
+    discount_applied = False
 
 
     try:
@@ -77,7 +77,7 @@ def create_confirm_intent():
       # Only create a Payment Intent if eligible
       if eligible_for_promotion:
         discounted_amount=0.9*amount
-        discountApplied=True
+        discount_applied=True
         payment_intent = stripe.PaymentIntent.create(
           amount=int(amount),  
           currency=currency,
@@ -91,8 +91,7 @@ def create_confirm_intent():
          'amount': '{:.2f}'.format(amount/100),
          'currency': currency,
          'discountedAmount': '{:.2f}'.format(discounted_amount/100), 
-         'discount': discountApplied,
-         'status': payment_intent.status    
+         'discount': discount_applied,   
       })
 
     except Exception as e:
@@ -103,6 +102,33 @@ def check_promotion_criteria(brand):
     if brand in ['visa']:
         return True
     return False
+
+# Create and Confirm PaymentIntent route for Link
+@app.route('/create-confirm-intent-link', methods=['POST'])
+def create_confirm_intent_link():
+    data = request.get_json()
+    amount = data['amount']
+    currency = data['currency']
+    discounted_amount = amount
+    discount_applied = False
+
+    try:
+      # Create a Payment Intent
+      payment_intent = stripe.PaymentIntent.create(
+        amount=int(amount),  
+        currency=currency,                
+      )
+      return jsonify({
+         'paymentIntentId': payment_intent.id,
+         'amount': '{:.2f}'.format(amount/100),
+         'currency': currency,
+         'discountedAmount': '{:.2f}'.format(discounted_amount/100), 
+         'discount': discount_applied,
+         'client_secret': payment_intent.client_secret
+      })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Create a Grabpay Payment Intent
 @app.route('/create-grabpay-intent', methods=['POST'])
@@ -125,9 +151,7 @@ def create_grabpay_intent():
             'amount': '{:.2f}'.format(amount/100),
             'discountedAmount': '{:.2f}'.format(discounted_amount/100),
             'discount': discount_applied,
-            'currency': currency,
-            'status': payment_intent.status
-
+            'currency': currency
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -154,8 +178,6 @@ def create_alipay_intent():
             'discountedAmount': '{:.2f}'.format(discounted_amount/100),
             'discount': discount_applied,
             'currency': currency,
-            'status': payment_intent.status
-
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -1,14 +1,16 @@
-document.addEventListener("DOMContentLoaded", async function () {
-    const stripe = Stripe(stripePublicKey); // Public key from the server
+// checkout.js
 
-    const amountinCents = amount;
+document.addEventListener("DOMContentLoaded", function () {
+
+    const stripe = Stripe(stripePublicKey);
     const options = {
-        mode: 'payment',
-        currency: currency,
-        amount: amountinCents,
-        paymentMethodCreation: 'manual',
-        // Customize with Appearance API.
-        appearance: {
+        layout: {
+            type: 'tabs',
+            defaultCollapsed: false,
+        }
+    }
+    // Customize with Appearance API.
+    const appearance = {
             theme: 'stripe',
             variables: {
                 colorPrimary: '#0570de',
@@ -34,8 +36,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                     boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.03), 0px 3px 6px rgba(19, 46, 73, 0.02), 0 0 0 2px var(--colorPrimary)',
                 },
             }
-        },
     };
+    const option = { mode: 'shipping' };
+    var elements = stripe.elements({
+        mode: 'payment',
+        currency: currency,
+        amount: amount,
+        paymentMethodCreation: 'manual',
+        appearance: appearance
+    });
+    // Create Address Element
+    const addressElement = elements.create('address', option);
+    addressElement.mount('#address-element');
+
+    // Create Payment Element
+    const paymentElement = elements.create('payment', options);
+    paymentElement.mount('#payment-element'); 
+
+    // Create Link Authentication Element
+    const linkAuthenticationElement =  elements.create('linkAuthentication') 
+    linkAuthenticationElement.mount("#link-authentication-element"); 
 
     // Define form variable here to ensure it exists
     const form = document.getElementById('payment-form');
@@ -43,31 +63,29 @@ document.addEventListener("DOMContentLoaded", async function () {
         const messageContainer = document.querySelector('#error-message');
         if (messageContainer) {
             messageContainer.textContent = error.message; // Display the error message
-            // Note: The 'button' variable is not in scope here.
-            // You might need to pass it or define it in a higher scope.
             // button.disabled = false; // Re-enable button on error
         }
     };
 
+    let addressComplete = false;
+    let paymentComplete = false;
+    let emailComplete = false;
+
     const button = form.querySelector('button[type="submit"]');
-    // Initially disable the button
     button.disabled = true;
 
-    const elements = stripe.elements(options); // Initialize Elements
-    const paymentElement = elements.create('payment'); // Create the payment element
-    paymentElement.mount('#payment-element'); // Mount the payment element to the DOM
+    // Function to check the form's completeness and enable the button.
+    function updateButtonState(){
+        button.disabled = !(addressComplete && paymentComplete && emailComplete);
+    };
 
     // Add a listener to detect the selected payment method
     let selectedPaymentMethodType = 'card'; // Default to card
     paymentElement.on('change', (event) => {
         selectedPaymentMethodType = event.value.type;
         console.log('Selected payment method:', selectedPaymentMethodType);
-        // Check if the payment fields are complete and valid
-        if (event.complete) {
-            button.disabled = false; // Enable the button
-        } else {
-            button.disabled = true; // Disable the button
-        }
+        paymentComplete = event.complete; // 'complete' is true if the payment details are valid
+        updateButtonState();
         // Show any validation errors from Stripe Elements
         if (event.error) {
             handleError(event.error);
@@ -76,7 +94,23 @@ document.addEventListener("DOMContentLoaded", async function () {
             const messageContainer = document.querySelector('#error-message');
             if (messageContainer) {
                 messageContainer.textContent = "";
-            }
+        }
+        }
+    });
+
+    addressElement.on('change', (event) => {
+        addressComplete = event.complete; // 'complete' is true if all required fields are filled and valid
+        updateButtonState();
+        if (event.error) {
+            handleError(event.error);
+        }
+    });
+
+    linkAuthenticationElement.on('change', (event) => {
+        emailComplete = event.complete; // 'complete' is true if all required fields are filled and valid
+        updateButtonState();
+        if (event.error) {
+            handleError(event.error);
         }
     });
 
@@ -106,21 +140,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.log(confirmationToken.id);
 
                 // Send confirmation token to server to create a Payment Intent
-                const res = await fetch("/create-confirm-intent", {
+                const res = await fetch("/create-confirm-intent-card", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         confirmationTokenId: confirmationToken.id, // Send the confirmation token ID to the server
-                        amount: amountinCents,
+                        amount: amount,
                         currency: currency
                     })
                 });
 
                 const data = await res.json();
                 if (res.ok) {
-                    const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                    const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
                     window.location.href = successUrl;
                 } 
                 else {
@@ -128,20 +162,50 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
             } 
+            else if (selectedPaymentMethodType === 'link') {
+                // Create the Payment Intent on the server
+                const res = await fetch("/create-confirm-intent-link", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: amount,
+                        currency: currency,
+                        paymentMethodType: 'link'
+                    })
+                });
+
+                const data = await res.json();
+                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
+                clientSecret = data.client_secret
+                console.log(clientSecret);
+
+                if (res.ok) {
+                    stripe.confirmPayment({
+                        elements,
+                        clientSecret,
+                        confirmParams: {
+                        return_url: window.location.origin + successUrl,
+                        },
+                    });
+                } 
+                else {
+                    handleError(error);
+                }
+            }
             else if (selectedPaymentMethodType === 'grabpay') {
                 // Create the Payment Intent on the server
                 const res = await fetch("/create-grabpay-intent", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        amount: amountinCents,
+                        amount: amount,
                         currency: currency,
                         paymentMethodType: 'grabpay'
                     })
                 });
 
                 const data = await res.json();
-                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
                         
                 if (res.ok) {
                     stripe.confirmGrabPayPayment(data.client_secret, {
@@ -159,14 +223,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        amount: amountinCents,
+                        amount: amount,
                         currency: currency,
                         paymentMethodType: 'alipay'
                     })
                 });
 
                 const data = await res.json();
-                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}&status=${data.status}`;
+                const successUrl = `/success?payment_intent=${data.paymentIntentId}&amount=${data.amount}&currency=${data.currency}&discounted_amount=${data.discountedAmount}&discount=${data.discount}&currency=${data.currency}`;
                         
                 if (res.ok) {
                     stripe.confirmAlipayPayment(data.client_secret, {

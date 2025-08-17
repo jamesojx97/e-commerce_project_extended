@@ -62,7 +62,9 @@ The application is structured as a Flask project:
 
 ### Approach
 
-I considered what the merchant integrating Stripe may require in terms of their checkout flow and the business logic necessary. This is why I chose to show local Payment Methods such as Alipay and GrabPay in addition to cards. From past experience, merchants choosing to integrate Payment Element often have their own business logic they want to run prior to creating the Payment Intent. Thus, I chose an advanced integration design - **Finalize Payments on the Server**. This demonstrates to the merchant how the implementation is flexible enough to accommodate their custom business logic such as inspecting card details to determine if discounts are applicable. Error handling such as prevention of multiple submissions and submitting card payment details without valid expiration dates or CVC formats has been included. 
+I considered what the merchant integrating Stripe may require in terms of their checkout flow and the business logic necessary.  This is why I chose to show Digital Wallets such as Alipay and GrabPay in addition to cards. I also wanted to demonstrate how easy it is to for a new user to set up Link and for an existing user to use Link for their checkout. Moreover, since the merchant is an online book store, collecting a delivery address would be important to faciliate their order fulfillment.
+
+From past experience, merchants choosing to integrate Payment Element often have their own business logic they want to run prior to creating the Payment Intent. Thus, I chose an advanced integration design - **Finalize Payments on the Server**. This demonstrates to the merchant how the implementation is flexible enough to accommodate their custom business logic such as inspecting card details to determine if discounts are applicable. Error handling such as prevention of multiple submissions and submitting card payment details without valid expiration dates or CVC formats has been included. 
 
 ### Documentation
 
@@ -74,6 +76,9 @@ I considered what the merchant integrating Stripe may require in terms of their 
 - [Retrieve Payment Intent API](https://docs.stripe.com/api/payment_intents/retrieve)
 - [Create Confirmation Token](https://docs.stripe.com/js/confirmation_tokens/create_confirmation_token)
 - [Retrieve Confirmation Token API](https://docs.stripe.com/api/confirmation_tokens/retrieve)
+- [Link Authentication Element](https://docs.stripe.com/payments/elements/link-authentication-element)
+- [Address Element](https://docs.stripe.com/elements/address-element)
+- [Listening for changes on Address Elemnt](https://docs.stripe.com/elements/address-element/collect-addresses#web-retrieve-address)
 - [Jinja Templating](https://jinja.palletsprojects.com/en/stable/templates/)
 - [Jinja Templating Primer](https://realpython.com/primer-on-jinja-templating/)
 - [Flask Documentation](https://flask.palletsprojects.com/en/stable/)

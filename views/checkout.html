@@ -19,10 +19,15 @@
     <div class="card box-shadow mt-40">
       <div class="card-body">
         <form id="payment-form" name="payment-form">
-          <div>
-            <label for="email">Email address</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="you@email.com">
+          <h5 class="mt-20">Email Address</h5>
+          <div id="link-authentication-element" class="mt-20">
+            <!-- Stripe Link Authentication Element will be inserted here -->
           </div>
+          <h5 class="mt-20">Shipping Address</h5>
+          <div id="address-element" class="mt-20">
+            <!-- Stripe Address Element will be inserted here -->
+          </div>
+          <h5 class="mt-20">Payment Details</h5>
           <div id="payment-element" class="mt-20 text-center text-secondary border-placeholder">
               <!-- Stripe Payment Element will be inserted here -->
           </div>
@@ -41,5 +46,6 @@
     const currency = "{{ default_currency }}"
 </script>
 <script src="/js/checkout.js"></script>  <!-- Path to the JS folder -->
+<script src="https://js.stripe.com/basil/stripe.js"></script>
 
 {% endblock %}
