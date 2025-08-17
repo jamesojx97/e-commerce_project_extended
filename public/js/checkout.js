@@ -63,7 +63,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const messageContainer = document.querySelector('#error-message');
         if (messageContainer){
             let userMessage = 'An unexpected error occurred. Please try again.';
-            let retryLink = '';
             // Extract the specific error message from the raw response
             if (error.message) {
                 const parts = error.message.split(': ');
@@ -97,16 +96,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log('Selected payment method:', selectedPaymentMethodType);
         paymentComplete = event.complete; // 'complete' is true if the payment details are valid
         updateButtonState();
-        // Show any validation errors from Stripe Elements
-        if (event.error) {
-            handleError(event.error);
-        } else {
-            // Clear any existing error messages if the input is now valid
-            const messageContainer = document.querySelector('#error-message');
-            if (messageContainer) {
-                messageContainer.textContent = "";
-        }
-        }
     });
 
     addressElement.on('change', (event) => {
