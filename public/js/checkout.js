@@ -64,7 +64,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (messageContainer){
             let userMessage = 'An unexpected error occurred. Please try again.';
             let retryLink = '';
-            // Check if the error message contains the specific phrase
             // Extract the specific error message from the raw response
             if (error.message) {
                 const parts = error.message.split(': ');
@@ -74,12 +73,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     userMessage = error.message;
                 }
             }
-            // Add a custom message for card-related errors
-            if (userMessage.includes('card has insufficient funds') || userMessage.includes('card was declined')) {
-                userMessage = userMessage + '. Please try with another card.';
-                retryLink = `<a href="/" class="btn btn-primary mt-2">Make another purchase</a>`;
-            }
-            messageContainer.innerHTML = `<div class="alert alert-danger" role="alert"><strong>${userMessage}</strong>${retryLink}</div>`;
+            // Style the message
+            messageContainer.innerHTML = `<div class="alert alert-danger" role="alert"><strong>${userMessage}</strong></div>`;
         }
     };
 

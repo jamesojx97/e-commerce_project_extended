@@ -78,14 +78,13 @@ def create_confirm_intent_card():
       if eligible_for_promotion:
         discounted_amount=0.9*amount
         discount_applied=True
-        payment_intent = stripe.PaymentIntent.create(
-          amount=int(amount),  
-          currency=currency,
-          confirm=True,                  
-          confirmation_token=confirmation_token,
-          return_url='http://127.0.0.1:5000/success'
-          
-      )
+      payment_intent = stripe.PaymentIntent.create(
+        amount=int(discounted_amount),  
+        currency=currency,
+        confirm=True,                  
+        confirmation_token=confirmation_token,
+        return_url='http://127.0.0.1:5000/success'
+    )
       return jsonify({
          'paymentIntentId': payment_intent.id,
          'amount': '{:.2f}'.format(amount/100),
