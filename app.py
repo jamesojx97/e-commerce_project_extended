@@ -60,6 +60,20 @@ def create_confirm_intent_card():
     currency = data['currency']
     discounted_amount = amount
     discount_applied = False
+    name = data['name']
+    email = data['email']
+
+    print(email)
+
+
+    customer = stripe.Customer.list(email=email).data
+    if not customer:
+        customer = stripe.Customer.create(
+            email=email,
+            name=name
+        )
+    else:
+        customer = customer[0]
 
 
     try:
@@ -81,6 +95,7 @@ def create_confirm_intent_card():
       payment_intent = stripe.PaymentIntent.create(
         amount=int(discounted_amount),  
         currency=currency,
+        customer=customer.id,
         confirm=True,                  
         confirmation_token=confirmation_token,
         return_url='http://127.0.0.1:5000/success'
@@ -111,12 +126,24 @@ def create_confirm_intent_link():
     currency = data['currency']
     discounted_amount = amount
     discount_applied = False
+    email = data['email']
+    name = data['name']
+
+    customer = stripe.Customer.list(email=email).data
+    if not customer:
+        customer = stripe.Customer.create(
+            email=email,
+            name=name
+        )
+    else:
+        customer = customer[0]
 
     try:
       # Create a Payment Intent
       payment_intent = stripe.PaymentIntent.create(
         amount=int(amount),  
-        currency=currency,                
+        currency=currency,
+        customer=customer.id                
       )
       return jsonify({
          'paymentIntentId': payment_intent.id,
@@ -138,12 +165,26 @@ def create_grabpay_intent():
     currency = data['currency']
     discounted_amount = amount
     discount_applied = False
+    name = data['name']
+    email = data['email']
+
+    customer = stripe.Customer.list(email=email).data
+
+    customer = stripe.Customer.list(email=email).data
+    if not customer:
+        customer = stripe.Customer.create(
+            email=email,
+            name=name
+        )
+    else:
+        customer = customer[0]
 
     try:
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency=currency,
             payment_method_types=['grabpay'],
+            customer=customer.id
         )
         return jsonify({
             'client_secret': payment_intent.client_secret,
@@ -164,12 +205,24 @@ def create_alipay_intent():
     currency = data['currency']
     discounted_amount = amount
     discount_applied = False
+    name = data['name']
+    email = data['email']
+
+    customer = stripe.Customer.list(email=email).data
+    if not customer:
+        customer = stripe.Customer.create(
+            email=email,
+            name=name
+        )
+    else:
+        customer = customer[0]
 
     try:
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency=currency,
             payment_method_types=['alipay'],
+            customer=customer.id
         )
         return jsonify({
             'client_secret': payment_intent.client_secret,

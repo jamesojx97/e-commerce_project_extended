@@ -80,6 +80,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let addressComplete = false;
     let paymentComplete = false;
     let emailComplete = false;
+    let customerName = '';
+    let customerEmail = '';
 
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
@@ -100,6 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     addressElement.on('change', (event) => {
         addressComplete = event.complete; // 'complete' is true if all required fields are filled and valid
+        customerName = event.value.name;
         updateButtonState();
         if (event.error) {
             handleError(event.error);
@@ -108,6 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     linkAuthenticationElement.on('change', (event) => {
         emailComplete = event.complete; // 'complete' is true if all required fields are filled and valid
+        customerEmail = event.value.email;
         updateButtonState();
         if (event.error) {
             handleError(event.error);
@@ -117,6 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (form) {
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); // Prevent form from submitting normally
+
             const button = form.querySelector('button[type="submit"]');
             button.disabled = true; // Disable the button to prevent multiple submissions
 
@@ -148,7 +153,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     body: JSON.stringify({
                         confirmationTokenId: confirmationToken.id, // Send the confirmation token ID to the server
                         amount: amount,
-                        currency: currency
+                        currency: currency,
+                        email: customerEmail,
+                        name: customerName
                     })
                 });
 
@@ -171,7 +178,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     body: JSON.stringify({
                         amount: amount,
                         currency: currency,
-                        paymentMethodType: 'link'
+                        paymentMethodType: 'link',
+                        email: customerEmail,
+                        name: customerName
                     })
                 });
 
@@ -201,7 +210,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     body: JSON.stringify({
                         amount: amount,
                         currency: currency,
-                        paymentMethodType: 'grabpay'
+                        paymentMethodType: 'grabpay',
+                        email: customerEmail,
+                        name: customerName
                     })
                 });
 
@@ -226,7 +237,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     body: JSON.stringify({
                         amount: amount,
                         currency: currency,
-                        paymentMethodType: 'alipay'
+                        paymentMethodType: 'alipay',
+                        email: customerEmail,
+                        name: customerName
                     })
                 });
 
